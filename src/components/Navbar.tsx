@@ -23,10 +23,10 @@ export default function Navbar() {
                 <Link href="/" className="text-2xl font-bold tracking-tighter">
                     Blan_
                 </Link>
-                <div className="hidden md:flex gap-6 text-sm text-foreground/70 font-medium">
+                <div className="flex gap-6 text-sm text-foreground/70 font-medium">
                     <Link href="/" className="hover:text-foreground transition-colors">Playground</Link>
                     <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
-                    <Link href="/examples" className="hover:text-foreground transition-colors">Examples</Link>
+                    <Link href="/examples" className="text-foreground transition-colors font-bold">Examples</Link>
                 </div>
             </div>
 
