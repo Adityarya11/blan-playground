@@ -1,5 +1,6 @@
 "use client";
 import Editor from '@monaco-editor/react';
+import { useEffect, useState } from 'react';
 
 interface BlanEditorProps {
     code: string;
@@ -7,13 +8,27 @@ interface BlanEditorProps {
 }
 
 export default function BlanEditor({ code, onChange }: BlanEditorProps) {
+    const [editorTheme, setEditorTheme] = useState<'blanDark' | 'blanLight'>('blanDark');
 
-    // This runs right BEFORE the editor mounts, ensuring the theme and language exist first!
+    // Watch the HTML tag to see if the Navbar toggles the "dark" class
+    useEffect(() => {
+        const updateTheme = () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            setEditorTheme(isDark ? 'blanDark' : 'blanLight');
+        };
+
+        updateTheme(); // Run once on mount
+
+        // Observer to listen for class changes triggered by your Navbar
+        const observer = new MutationObserver(updateTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+        return () => observer.disconnect();
+    }, []);
+
     const handleEditorWillMount = (monaco: any) => {
-        // 1. Register the custom Blan language
         monaco.languages.register({ id: 'blan' });
 
-        // 2. Define the Lexical Tokens
         monaco.languages.setMonarchTokensProvider('blan', {
             tokenizer: {
                 root: [
@@ -27,7 +42,7 @@ export default function BlanEditor({ code, onChange }: BlanEditorProps) {
             }
         });
 
-        // 3. Define the custom theme
+        // Dark Theme (Unchanged)
         monaco.editor.defineTheme('blanDark', {
             base: 'vs-dark',
             inherit: true,
@@ -44,16 +59,34 @@ export default function BlanEditor({ code, onChange }: BlanEditorProps) {
                 'editorLineNumber.foreground': '#555555',
             }
         });
+
+        // Light Theme (New!)
+        monaco.editor.defineTheme('blanLight', {
+            base: 'vs',
+            inherit: true,
+            rules: [
+                { token: 'keyword.start', foreground: '#16A34A', fontStyle: 'bold' }, // Darker green
+                { token: 'keyword.end', foreground: '#DC2626', fontStyle: 'bold' },   // Darker red
+                { token: 'keyword', foreground: '#2563EB' },                          // Darker blue
+                { token: 'comment', foreground: '#6B7280', fontStyle: 'italic' },
+                { token: 'string', foreground: '#D97706' },
+            ],
+            colors: {
+                'editor.background': '#ffffff', // Pure white
+                'editor.lineHighlightBackground': '#f3f4f6',
+                'editorLineNumber.foreground': '#9ca3af',
+            }
+        });
     };
 
     return (
         <Editor
             height="100%"
             defaultLanguage="blan"
-            theme="blanDark"
+            theme={editorTheme} // Dynamically switches!
             value={code}
             onChange={onChange}
-            beforeMount={handleEditorWillMount} // <--- The magic fix
+            beforeMount={handleEditorWillMount}
             options={{
                 minimap: { enabled: false },
                 fontSize: 15,
