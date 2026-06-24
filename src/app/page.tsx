@@ -10,6 +10,29 @@ bolna x
 bolna "hello"
 Bhag Bsdk`;
 
+const EXAMPLES = [
+  {
+    name: "Hello World",
+    description: "The classic starting point.",
+    code: `Haan Meri Jaan\n// A simple greeting\nbolna "Hello, World!"\nBhag Bsdk`
+  },
+  {
+    name: "Variables & Math",
+    description: "Basic arithmetic operations.",
+    code: `Haan Meri Jaan\n// Declare some variables\nbhadwa x matlb 10\nbhadwa y matlb 20\n\n// Add them up\nbolna "The sum is:"\nbolna x + y\nBhag Bsdk`
+  },
+  {
+    name: "If / Else Logic",
+    description: "Basic control flow.",
+    code: `Haan Meri Jaan\nbhadwa age matlb 18\n\n// Check condition\nagar age > 17 tab\n  bolna "Access Granted: Adult"\nnahi_toh\n  bolna "Access Denied: Minor"\nkhtm\nBhag Bsdk`
+  },
+  {
+    name: "While Loop",
+    description: "Counting down to zero.",
+    code: `Haan Meri Jaan\n// Loop from 5 down to 1\nbhadwa count matlb 5\n\nJabTak count > 0 TabTak\n  bolna count\n  count matlb count - 1\nhogya\n\nbolna "Blastoff!"\nBhag Bsdk`
+  }
+];
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,9 +55,8 @@ function PlaygroundInner() {
   const [isCached, setIsCached] = useState<boolean>(false);
   const [isError, setIsError] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-
-  // Added "unauthorized" to the state union
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error" | "unauthorized">("idle");
+  const [showExamples, setShowExamples] = useState<boolean>(false);
 
   useEffect(() => {
     const param = searchParams.get("code");
@@ -66,7 +88,6 @@ function PlaygroundInner() {
 
   const handleSave = async () => {
     if (!isLoggedIn) {
-      // Trigger the new unauthorized state
       setSaveStatus("unauthorized");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
@@ -177,24 +198,68 @@ function PlaygroundInner() {
         {/* Left Side: The Code Editor */}
         <div className="w-full md:w-1/2 flex flex-col border-b md:border-b-0 md:border-r border-border h-[50vh] md:h-auto relative">
 
-          {/* UPGRADE: Taller header (h-16), larger font (text-base font-semibold) */}
-          <div className="flex justify-between items-center px-6 h-16 border-b border-border bg-muted/40 shrink-0">
-            <span className="text-base font-semibold tracking-wide text-foreground/90">main.bl</span>
+          <div className="flex justify-between items-center px-6 h-16 border-b border-border bg-muted/40 shrink-0 relative z-30">
+
+            <div className="flex items-center gap-4">
+              <span className="text-base font-semibold tracking-wide text-foreground/90">main.bl</span>
+
+              {/* DROPDOWN COMPONENT */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowExamples(!showExamples)}
+                  className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-muted/80 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /></svg>
+                  Examples
+                </button>
+
+                {showExamples && (
+                  <>
+                    {/* Invisible overlay to close dropdown when clicking outside */}
+                    <div className="fixed inset-0 z-40" onClick={() => setShowExamples(false)} />
+
+                    {/* THE FIX: 
+                      1. bg-background safely taps our CSS variables (no flashbangs).
+                      2. z-[100] absolutely dominates Monaco's internal layering. 
+                    */}
+                    <div className="absolute top-full left-0 mt-2 w-72 bg-background border border-border rounded-xl shadow-2xl z-[100] overflow-hidden transform opacity-100 scale-100 transition-all origin-top-left">
+                      <div className="px-4 py-3 border-b border-border bg-muted/40 flex items-center justify-between">
+                        <span className="text-xs font-bold text-foreground/70 uppercase tracking-widest">Snippets Library</span>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto p-2 space-y-1">
+                        {EXAMPLES.map((ex) => (
+                          <button
+                            key={ex.name}
+                            onClick={() => {
+                              setCode(ex.code);
+                              setShowExamples(false);
+                            }}
+                            className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/80 transition-colors group flex flex-col gap-0.5"
+                          >
+                            <span className="text-sm font-semibold text-foreground/90 group-hover:text-foreground transition-colors">{ex.name}</span>
+                            <span className="text-xs text-foreground/50 transition-colors">{ex.description}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
 
             <div className="flex items-center gap-3">
-              {/* UPGRADE: Buttons are now text-sm (larger) and have more padding */}
               <button
                 onClick={handleSave}
                 disabled={saveStatus === "saving"}
                 className={`text-sm px-5 py-2 rounded-md font-medium transition-all ${saveStatus === "saving"
-                    ? "bg-muted text-foreground/50 cursor-wait"
-                    : saveStatus === "saved"
-                      ? "bg-green-600/20 text-green-600 border border-green-600/30 dark:text-green-400"
-                      : saveStatus === "unauthorized"
+                  ? "bg-muted text-foreground/50 cursor-wait"
+                  : saveStatus === "saved"
+                    ? "bg-green-600/20 text-green-600 border border-green-600/30 dark:text-green-400"
+                    : saveStatus === "unauthorized"
+                      ? "bg-red-600/20 text-red-600 border border-red-600/30 dark:text-red-400"
+                      : saveStatus === "error"
                         ? "bg-red-600/20 text-red-600 border border-red-600/30 dark:text-red-400"
-                        : saveStatus === "error"
-                          ? "bg-red-600/20 text-red-600 border border-red-600/30 dark:text-red-400"
-                          : "border border-border text-foreground/80 hover:bg-muted hover:text-foreground"
+                        : "border border-border text-foreground/80 hover:bg-muted hover:text-foreground"
                   }`}
               >
                 {saveStatus === "saving" && "Saving..."}
@@ -208,8 +273,8 @@ function PlaygroundInner() {
                 onClick={handleRun}
                 disabled={isCompiling}
                 className={`text-sm px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${isCompiling
-                    ? "bg-foreground/30 cursor-not-allowed text-background"
-                    : "bg-foreground text-background hover:opacity-90 shadow-sm"
+                  ? "bg-foreground/30 cursor-not-allowed text-background"
+                  : "bg-foreground text-background hover:opacity-90 shadow-sm"
                   }`}
               >
                 {isCompiling ? "Compiling..." : "Run Code"}
@@ -236,13 +301,12 @@ function PlaygroundInner() {
             )}
           </div>
 
-          {/* UPGRADE: Terminal text bumped to text-[15px] with loose line height for readability */}
           <div
             className={`p-6 grow font-mono text-[15px] whitespace-pre-wrap overflow-y-auto leading-[1.7] tracking-tight ${isError
-                ? "text-red-400"
-                : output
-                  ? "text-foreground/90"
-                  : "text-foreground/40"
+              ? "text-red-400"
+              : output
+                ? "text-foreground/90"
+                : "text-foreground/40"
               }`}
           >
             {output || "// Execute your code to view the output."}
