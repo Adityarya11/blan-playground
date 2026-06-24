@@ -65,14 +65,12 @@ export default function Navbar() {
                     <div className="flex items-center gap-6">
                         <Link
                             href="/"
-                            className="text-xl font-bold tracking-tighter text-foreground"
+                            className="text-xl font-bold tracking-tighter text-foreground hover:text-foreground transition-colors"
                         >
-                            Blan_
+                            Blan_Playground
                         </Link>
                         <div className="flex items-center gap-4 text-sm font-medium text-foreground/60">
-                            <Link href="/" className="hover:text-foreground transition-colors">
-                                Playground
-                            </Link>
+
                             <Link
                                 href="/docs"
                                 className="hover:text-foreground transition-colors"
