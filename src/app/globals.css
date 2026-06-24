@@ -23,3 +23,12 @@ body {
     background-color 0.2s ease,
     color 0.2s ease;
 }
+
+@keyframes grow {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
