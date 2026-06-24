@@ -171,19 +171,17 @@ function PlaygroundInner() {
   };
 
   return (
-    // 1. Added an outer wrapper with padding (px-4 md:px-8) and a subtle background tint
     <div className="grow flex flex-col bg-muted/10 min-h-[calc(100vh-73px)] p-4 md:p-8">
-
-      {/* 2. Added a max-w-7xl centered container to match your Navbar, with rounded corners */}
       <div className="max-w-7xl mx-auto w-full grow flex flex-col md:flex-row bg-background border border-border rounded-xl shadow-sm overflow-hidden">
 
         {/* Left Side: The Code Editor */}
         <div className="w-full md:w-1/2 flex flex-col border-b md:border-b-0 md:border-r border-border h-[50vh] md:h-auto relative">
-          <div className="flex justify-between items-center p-3 px-6 border-b border-border bg-muted/30 shrink-0">
+
+          {/* HEADER 1: Locked to h-14, px-6, bg-muted/30 */}
+          <div className="flex justify-between items-center px-6 h-14 border-b border-border bg-muted/30 shrink-0">
             <span className="text-sm font-medium text-foreground/80">main.bl</span>
 
             <div className="flex items-center gap-3">
-              {/* Dynamic Save Button */}
               <button
                 onClick={handleSave}
                 disabled={saveStatus === "saving"}
@@ -227,8 +225,10 @@ function PlaygroundInner() {
 
         {/* Right Side: The Output Terminal */}
         <div className="w-full md:w-1/2 flex flex-col bg-background h-[50vh] md:h-auto">
-          <div className="flex items-center justify-between px-5 py-2.5 border-b border-border bg-muted/20 shrink-0">
-            <span className="text-xs font-medium text-foreground/50">Output</span>
+
+          {/* HEADER 2: Exactly mirroring Left Side (h-14, px-6, bg-muted/30) */}
+          <div className="flex items-center justify-between px-6 h-14 border-b border-border bg-muted/30 shrink-0">
+            <span className="text-sm font-medium text-foreground/80">Output</span>
             {isCached && (
               <span className="text-xs font-mono px-2 py-0.5 rounded border border-foreground/20 text-foreground/40">
                 cached
@@ -236,6 +236,7 @@ function PlaygroundInner() {
             )}
           </div>
 
+          {/* TERMINAL CONTENT: p-6 (24px) precisely matches Monaco's 24px top padding */}
           <div
             className={`p-6 grow font-mono text-sm whitespace-pre-wrap overflow-y-auto leading-relaxed ${isError
                 ? "text-red-400"
