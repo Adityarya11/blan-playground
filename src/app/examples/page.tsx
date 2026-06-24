@@ -1,57 +1,182 @@
-// Pulling directly from your EXAMPLES.md
-const blanExamples = [
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import BlanEditor from "@/components/BlanEditor";
+
+const examples = [
     {
         title: "Quick Start",
-        description: "The smallest useful Blan program demonstrating variables and output.",
-        code: `Haan Meri Jaan\nbhadwa x matlb 10\nbolna x\nbolna "hello"\nBhag Bsdk`
+        description: "Variables, assignment, and output. The minimum viable Blan program.",
+        code: `Haan Meri Jaan
+bhadwa x matlb 10
+bolna x
+bolna "hello"
+Bhag Bsdk`,
     },
     {
         title: "If / Else-If / Else",
-        description: "The canonical if/else example showing chained conditional branches.",
-        code: `Haan Meri Jaan\nbhadwa x matlb 10\n\nagar x > 15 tab\n    bolna "X is greater than 15"\nwarna x == 10 tab\n    bolna "X is exactly 10"\nnahi_toh\n    bolna "X is less than 10"\nkhtm\n\nBhag Bsdk`
+        description: "Chained conditional branches using agar, warna, and nahi_toh.",
+        code: `Haan Meri Jaan
+bhadwa x matlb 10
+
+agar x > 15 tab
+    bolna "X is greater than 15"
+warna x == 10 tab
+    bolna "X is exactly 10"
+nahi_toh
+    bolna "X is less than 10"
+khtm
+
+Bhag Bsdk`,
     },
     {
-        title: "While Loop (JabTak)",
-        description: "Arithmetic decrementing and repeated execution.",
-        code: `Haan Meri Jaan\nbhadwa count matlb 3\n\nJabTak count > 0 TabTak\n    bolna count\n    bhadwa count matlb count - 1\nhogya\n\nBhag Bsdk`
+        title: "While Loop",
+        description: "Arithmetic decrementing with JabTak. Runs until the condition is false.",
+        code: `Haan Meri Jaan
+bhadwa count matlb 3
+
+JabTak count > 0 TabTak
+    bolna count
+    bhadwa count matlb count - 1
+hogya
+
+Bhag Bsdk`,
     },
     {
-        title: "Boolean Implement",
-        description: "Numeric mapping of booleans (sach behaves like 1, jhooth like 0).",
-        code: `Haan Meri Jaan\nbhadwa x matlb sach\n\nagar x == 1 tab\n    bolna "ok"\nkhtm\n\nBhag Bsdk`
+        title: "Boolean Logic",
+        description: "Logical operators with short-circuit evaluation. sach and jhooth as first-class values.",
+        code: `Haan Meri Jaan
+bolna !sach
+bolna sach && jhooth
+bolna jhooth || sach
+Bhag Bsdk`,
     },
     {
-        title: "Modulo Error",
-        description: "Evaluator stops with a modulo-by-zero runtime error.",
-        code: `Haan Meri Jaan\nbolna 10 % 0\nBhag Bsdk`
-    }
+        title: "Boolean in Conditionals",
+        description: "A boolean variable used directly as a condition without an explicit comparison.",
+        code: `Haan Meri Jaan
+bhadwa x matlb sach
+
+agar x tab
+    bolna "bool works"
+khtm
+
+Bhag Bsdk`,
+    },
+    {
+        title: "Numeric Boolean Mapping",
+        description: "sach behaves like 1 and jhooth like 0 inside numeric expressions and comparisons.",
+        code: `Haan Meri Jaan
+bhadwa x matlb sach
+
+agar x == 1 tab
+    bolna "ok"
+khtm
+
+Bhag Bsdk`,
+    },
+    {
+        title: "String Concatenation",
+        description: "The + operator joins strings when both operands are string types.",
+        code: `Haan Meri Jaan
+bhadwa first matlb "Haan "
+bhadwa second matlb "Meri Jaan"
+bolna first + second
+Bhag Bsdk`,
+    },
+    {
+        title: "Combined: Branch + Loop",
+        description: "Conditionals and loops used together in one program.",
+        code: `Haan Meri Jaan
+bhadwa x matlb 10
+
+agar x > 15 tab
+    bolna "X is greater than 15"
+warna x == 10 tab
+    bolna "X is exactly 10"
+nahi_toh
+    bolna "X is less than 10"
+khtm
+
+bhadwa count matlb 3
+JabTak count > 0 TabTak
+    bolna count
+    bhadwa count matlb count - 1
+hogya
+
+Bhag Bsdk`,
+    },
+    {
+        title: "Comparison Operators",
+        description: "All six comparison operators evaluated against numbers and booleans.",
+        code: `Haan Meri Jaan
+bolna 5 < 10
+bolna 10 >= 10
+bolna sach == 1
+bolna 3 != 4
+Bhag Bsdk`,
+    },
+    {
+        title: "Runtime Error — Modulo by Zero",
+        description: "The evaluator stops with a themed runtime error when dividing by zero.",
+        code: `Haan Meri Jaan
+bolna 10 % 0
+Bhag Bsdk`,
+    },
 ];
+
+function ExampleCard({ title, description, code }: { title: string; description: string; code: string }) {
+    const router = useRouter();
+    const [hovered, setHovered] = useState(false);
+
+    const handleClick = () => {
+        const encoded = encodeURIComponent(code);
+        router.push(`/?code=${encoded}`);
+    };
+
+    return (
+        <div
+            className="relative border border-border rounded-lg overflow-hidden cursor-pointer group transition-all duration-200 hover:border-foreground/40 bg-background"
+            onClick={handleClick}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
+            <div className="px-5 pt-5 pb-3">
+                <h2 className="text-sm font-semibold text-foreground tracking-tight">{title}</h2>
+                <p className="text-xs text-foreground/50 mt-1 leading-relaxed">{description}</p>
+            </div>
+
+            <div className="relative h-48 pointer-events-none select-none">
+                <BlanEditor code={code} onChange={() => { }} readOnly />
+
+                <div
+                    className={`absolute inset-0 flex items-center justify-center transition-opacity duration-150 ${hovered ? "opacity-100" : "opacity-0"
+                        }`}
+                    style={{ background: "rgba(0,0,0,0.55)" }}
+                >
+                    <span className="text-xs font-medium text-white border border-white/30 px-4 py-1.5 rounded">
+                        Click to run
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function ExamplesPage() {
     return (
-        <div className="max-w-6xl mx-auto w-full p-8 py-12 flex-grow flex flex-col">
+        <div className="max-w-6xl mx-auto w-full px-6 py-12 flex-grow flex flex-col">
             <div className="mb-10">
                 <h1 className="text-3xl font-bold tracking-tight mb-2">Examples</h1>
-                <p className="text-foreground/70">
-                    Practical showcases for the Bad Language Compiler. Verify behavior and learn the syntax.
+                <p className="text-sm text-foreground/60">
+                    Click any example to load it directly into the playground.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {blanExamples.map((example, index) => (
-                    <div
-                        key={index}
-                        className="border border-border bg-muted/10 rounded-lg p-6 flex flex-col hover:border-foreground/30 transition-colors"
-                    >
-                        <h2 className="text-xl font-semibold mb-2">{example.title}</h2>
-                        <p className="text-sm text-foreground/70 mb-4">{example.description}</p>
-
-                        <div className="bg-background border border-border rounded p-4 overflow-x-auto mt-auto">
-                            <pre className="font-mono text-sm text-foreground/90 whitespace-pre">
-                                <code>{example.code}</code>
-                            </pre>
-                        </div>
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {examples.map((example) => (
+                    <ExampleCard key={example.title} {...example} />
                 ))}
             </div>
         </div>
