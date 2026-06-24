@@ -48,21 +48,21 @@ export default function BlanEditor({ code, onChange, readOnly = false }: BlanEdi
             },
         });
 
-        monaco.editor.defineTheme("blanDark", {
-            base: "vs-dark",
+        monaco.editor.defineTheme('blanDark', {
+            base: 'vs-dark',
             inherit: true,
             rules: [
-                { token: "keyword.start", foreground: "#4ADE80", fontStyle: "bold" },
-                { token: "keyword.end", foreground: "#F87171", fontStyle: "bold" },
-                { token: "keyword", foreground: "#60A5FA" },
-                { token: "comment", foreground: "#9CA3AF", fontStyle: "italic" },
-                { token: "string", foreground: "#FCD34D" },
+                { token: 'keyword.start', foreground: '#4ADE80', fontStyle: 'bold' },
+                { token: 'keyword.end', foreground: '#F87171', fontStyle: 'bold' },
+                { token: 'keyword', foreground: '#60A5FA' },
+                { token: 'comment', foreground: '#71717A', fontStyle: 'italic' }, // Softer comment gray
+                { token: 'string', foreground: '#FCD34D' },
             ],
             colors: {
-                "editor.background": "#000000",
-                "editor.lineHighlightBackground": "#111111",
-                "editorLineNumber.foreground": "#555555",
-            },
+                'editor.background': '#09090b', // MATCHES THE NEW ZINC BACKGROUND
+                'editor.lineHighlightBackground': '#18181b',
+                'editorLineNumber.foreground': '#52525b',
+            }
         });
 
         monaco.editor.defineTheme("blanLight", {
@@ -93,20 +93,14 @@ export default function BlanEditor({ code, onChange, readOnly = false }: BlanEdi
             beforeMount={handleEditorWillMount}
             options={{
                 minimap: { enabled: false },
-                fontSize: 13,
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                padding: { top: 12 },
+                fontSize: 17,             // Increased from 15
+                lineHeight: 26,           // Added breathing room between lines
+                letterSpacing: 0.5,       // Added slight tracking
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                padding: { top: 24 },
                 scrollBeyondLastLine: false,
                 smoothScrolling: true,
-                wordWrap: "on",
-                readOnly,
-                domReadOnly: readOnly,
-                cursorStyle: readOnly ? "block" : "line",
-                renderLineHighlight: readOnly ? "none" : "line",
-                scrollbar: {
-                    vertical: "hidden",
-                    horizontal: "hidden",
-                },
+                wordWrap: 'on',
             }}
         />
     );

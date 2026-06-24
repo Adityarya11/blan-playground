@@ -171,21 +171,22 @@ function PlaygroundInner() {
   };
 
   return (
-    <div className="grow flex flex-col bg-muted/10 min-h-[calc(100vh-73px)] p-4 md:p-8">
+    <div className="grow flex flex-col bg-muted/30 min-h-[calc(100vh-73px)] p-4 md:p-8">
       <div className="max-w-7xl mx-auto w-full grow flex flex-col md:flex-row bg-background border border-border rounded-xl shadow-sm overflow-hidden">
 
         {/* Left Side: The Code Editor */}
         <div className="w-full md:w-1/2 flex flex-col border-b md:border-b-0 md:border-r border-border h-[50vh] md:h-auto relative">
 
-          {/* HEADER 1: Locked to h-14, px-6, bg-muted/30 */}
-          <div className="flex justify-between items-center px-6 h-14 border-b border-border bg-muted/30 shrink-0">
-            <span className="text-sm font-medium text-foreground/80">main.bl</span>
+          {/* UPGRADE: Taller header (h-16), larger font (text-base font-semibold) */}
+          <div className="flex justify-between items-center px-6 h-16 border-b border-border bg-muted/40 shrink-0">
+            <span className="text-base font-semibold tracking-wide text-foreground/90">main.bl</span>
 
             <div className="flex items-center gap-3">
+              {/* UPGRADE: Buttons are now text-sm (larger) and have more padding */}
               <button
                 onClick={handleSave}
                 disabled={saveStatus === "saving"}
-                className={`text-xs px-4 py-1.5 rounded font-medium transition-all ${saveStatus === "saving"
+                className={`text-sm px-5 py-2 rounded-md font-medium transition-all ${saveStatus === "saving"
                     ? "bg-muted text-foreground/50 cursor-wait"
                     : saveStatus === "saved"
                       ? "bg-green-600/20 text-green-600 border border-green-600/30 dark:text-green-400"
@@ -193,7 +194,7 @@ function PlaygroundInner() {
                         ? "bg-red-600/20 text-red-600 border border-red-600/30 dark:text-red-400"
                         : saveStatus === "error"
                           ? "bg-red-600/20 text-red-600 border border-red-600/30 dark:text-red-400"
-                          : "border border-border text-foreground/70 hover:bg-muted hover:text-foreground"
+                          : "border border-border text-foreground/80 hover:bg-muted hover:text-foreground"
                   }`}
               >
                 {saveStatus === "saving" && "Saving..."}
@@ -206,12 +207,12 @@ function PlaygroundInner() {
               <button
                 onClick={handleRun}
                 disabled={isCompiling}
-                className={`text-xs px-5 py-1.5 rounded font-medium transition-all flex items-center gap-2 ${isCompiling
+                className={`text-sm px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${isCompiling
                     ? "bg-foreground/30 cursor-not-allowed text-background"
-                    : "bg-foreground text-background hover:opacity-85"
+                    : "bg-foreground text-background hover:opacity-90 shadow-sm"
                   }`}
               >
-                {isCompiling ? "compiling..." : "Run"}
+                {isCompiling ? "Compiling..." : "Run Code"}
               </button>
             </div>
           </div>
@@ -226,26 +227,25 @@ function PlaygroundInner() {
         {/* Right Side: The Output Terminal */}
         <div className="w-full md:w-1/2 flex flex-col bg-background h-[50vh] md:h-auto">
 
-          {/* HEADER 2: Exactly mirroring Left Side (h-14, px-6, bg-muted/30) */}
-          <div className="flex items-center justify-between px-6 h-14 border-b border-border bg-muted/30 shrink-0">
-            <span className="text-sm font-medium text-foreground/80">Output</span>
+          <div className="flex items-center justify-between px-6 h-16 border-b border-border bg-muted/40 shrink-0">
+            <span className="text-base font-semibold tracking-wide text-foreground/90">Output Terminal</span>
             {isCached && (
-              <span className="text-xs font-mono px-2 py-0.5 rounded border border-foreground/20 text-foreground/40">
+              <span className="text-xs font-mono px-2.5 py-1 rounded-md border border-foreground/20 text-foreground/60 bg-muted/50">
                 cached
               </span>
             )}
           </div>
 
-          {/* TERMINAL CONTENT: p-6 (24px) precisely matches Monaco's 24px top padding */}
+          {/* UPGRADE: Terminal text bumped to text-[15px] with loose line height for readability */}
           <div
-            className={`p-6 grow font-mono text-sm whitespace-pre-wrap overflow-y-auto leading-relaxed ${isError
+            className={`p-6 grow font-mono text-[15px] whitespace-pre-wrap overflow-y-auto leading-[1.7] tracking-tight ${isError
                 ? "text-red-400"
                 : output
                   ? "text-foreground/90"
-                  : "text-foreground/25"
+                  : "text-foreground/40"
               }`}
           >
-            {output || "// run your code to see output here."}
+            {output || "// Execute your code to view the output."}
           </div>
         </div>
       </div>
