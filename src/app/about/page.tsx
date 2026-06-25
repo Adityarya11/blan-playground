@@ -149,7 +149,7 @@ export default function AboutPage() {
             <section className="mb-10">
                 <h2 className="text-xl font-semibold text-foreground mb-4">an honest note</h2>
                 <p className="text-sm text-foreground/60 leading-relaxed">
-                    Parts of this project were built with AI assistance (Claude by Anthropic) — specifically
+                    Parts of this project were built with AI assistance (ifykyk) — specifically
                     the frontend, documentation, and some backend refinements. The compiler, StrataKV, and
                     the core systems architecture are original work. The AI was used the way a senior
                     developer might be used: to review, suggest, and help move faster. Not to replace
