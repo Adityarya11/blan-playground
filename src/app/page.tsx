@@ -14,27 +14,113 @@ const EXAMPLES = [
   {
     name: "Hello World",
     description: "The classic starting point.",
-    code: `Haan Meri Jaan\n// A simple greeting\nbolna "Hello, World!"\nBhag Bsdk`
+    code: `Haan Meri Jaan
+bolna "Hello, World!"
+Bhag Bsdk`,
   },
   {
     name: "Variables & Math",
     description: "Basic arithmetic operations.",
-    code: `Haan Meri Jaan\n// Declare some variables\nbhadwa x matlb 10\nbhadwa y matlb 20\n\n// Add them up\nbolna "The sum is:"\nbolna x + y\nBhag Bsdk`
+    code: `Haan Meri Jaan
+bhadwa x matlb 10
+bhadwa y matlb 20
+bolna "The sum is:"
+bolna x + y
+bolna "The product is:"
+bolna x * y
+Bhag Bsdk`,
   },
   {
     name: "If / Else Logic",
-    description: "Basic control flow.",
-    code: `Haan Meri Jaan\nbhadwa age matlb 18\n\n// Check condition\nagar age > 17 tab\n  bolna "Access Granted: Adult"\nnahi_toh\n  bolna "Access Denied: Minor"\nkhtm\nBhag Bsdk`
+    description: "Chained conditional branches.",
+    code: `Haan Meri Jaan
+bhadwa age matlb 18
+
+agar age > 17 tab
+    bolna "Access Granted: Adult"
+warna age == 17 tab
+    bolna "Almost there."
+nahi_toh
+    bolna "Access Denied: Minor"
+khtm
+
+Bhag Bsdk`,
   },
   {
     name: "While Loop",
-    description: "Counting down to zero.",
-    code: `Haan Meri Jaan\n// Loop from 5 down to 1\nbhadwa count matlb 5\n\nJabTak count > 0 TabTak\n  bolna count\n  count matlb count - 1\nhogya\n\nbolna "Blastoff!"\nBhag Bsdk`
-  }
+    description: "Countdown from 5.",
+    code: `Haan Meri Jaan
+bhadwa count matlb 5
+
+JabTak count > 0 TabTak
+    bolna count
+    bhadwa count matlb count - 1
+hogya
+
+bolna "Blastoff!"
+Bhag Bsdk`,
+  },
+  {
+    name: "Fibonacci (n=8)",
+    description: "First 8 numbers of the sequence. Change n to tune.",
+    code: `Haan Meri Jaan
+bhadwa n matlb 8
+bhadwa a matlb 0
+bhadwa b matlb 1
+bhadwa i matlb 0
+
+bolna "Fibonacci sequence:"
+bolna a
+
+JabTak i < n TabTak
+    bolna b
+    bhadwa temp matlb a + b
+    bhadwa a matlb b
+    bhadwa b matlb temp
+    bhadwa i matlb i + 1
+hogya
+
+Bhag Bsdk`,
+  },
+  {
+    name: "Factorial (n=6)",
+    description: "Computes n! iteratively. Change n to tune.",
+    code: `Haan Meri Jaan
+bhadwa n matlb 6
+bhadwa result matlb 1
+bhadwa i matlb 1
+
+JabTak i <= n TabTak
+    bhadwa result matlb result * i
+    bhadwa i matlb i + 1
+hogya
+
+bolna "Factorial:"
+bolna result
+Bhag Bsdk`,
+  },
+  {
+    name: "Boolean Logic",
+    description: "sach and jhooth as first-class values.",
+    code: `Haan Meri Jaan
+bolna !sach
+bolna sach && jhooth
+bolna jhooth || sach
+bolna sach == 1
+Bhag Bsdk`,
+  },
+  {
+    name: "String Concat",
+    description: "The + operator joins strings.",
+    code: `Haan Meri Jaan
+bhadwa first matlb "Haan "
+bhadwa second matlb "Meri Jaan"
+bolna first + second
+Bhag Bsdk`,
+  },
 ];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function getCookie(name: string): string | null {
@@ -55,21 +141,22 @@ function PlaygroundInner() {
   const [isCached, setIsCached] = useState<boolean>(false);
   const [isError, setIsError] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error" | "unauthorized">("idle");
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error" | "unauthorized"
+  >("idle");
   const [showExamples, setShowExamples] = useState<boolean>(false);
 
   useEffect(() => {
     const param = searchParams.get("code");
     if (param) {
       setCode(decodeURIComponent(param));
+      router.replace("/");
     } else {
       const savedCode = localStorage.getItem("blan_draft");
       if (savedCode) setCode(savedCode);
     }
-
-    const token = getCookie("blan_token");
-    setIsLoggedIn(!!token);
-  }, [searchParams]);
+    setIsLoggedIn(!!getCookie("blan_token"));
+  }, [searchParams, router]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -77,14 +164,6 @@ function PlaygroundInner() {
     }, 1000);
     return () => clearTimeout(timeout);
   }, [code]);
-
-  const readResponseText = async (response: Response) => {
-    try {
-      return await response.text();
-    } catch {
-      return "";
-    }
-  };
 
   const handleSave = async () => {
     if (!isLoggedIn) {
@@ -106,12 +185,11 @@ function PlaygroundInner() {
         body: JSON.stringify({ source: code }),
       });
 
-      if (!res.ok) throw new Error("Save failed");
+      if (!res.ok) throw new Error("save failed");
 
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
     }
@@ -123,7 +201,7 @@ function PlaygroundInner() {
     setIsCompiling(true);
     setIsCached(false);
     setIsError(false);
-    setOutput("// Compiling...");
+    setOutput("// compiling...");
 
     try {
       const compileRes = await fetch(`${API_BASE_URL}/api/v1/compile`, {
@@ -133,183 +211,198 @@ function PlaygroundInner() {
       });
 
       if (!compileRes.ok) {
-        const errText = await readResponseText(compileRes);
-        throw new Error(
-          errText || `Failed to reach the compile endpoint. Status: ${compileRes.status}`
-        );
+        const text = await compileRes.text().catch(() => "");
+        throw new Error(text || `compile endpoint returned ${compileRes.status}`);
       }
 
       const compileData = await compileRes.json();
-      const jobId = compileData.ID || compileData.id || compileData.job_id;
+      const jobId = compileData.ID || compileData.id;
       const directOutput = compileData.Output ?? compileData.output;
       const directError = compileData.Error ?? compileData.error;
+      const cached = compileData.cached === true;
 
       if (directOutput !== undefined || directError !== undefined) {
-        setIsCached(true);
-        if (directError) setIsError(true);
-        setOutput(String(directError || directOutput || "// Execution finished with no output."));
+        const hasError = Boolean(directError);
+        setIsError(hasError);
+        setIsCached(cached && !hasError);
+        setOutput(String(directError || directOutput || "// execution finished with no output."));
         return;
       }
 
-      if (!jobId) {
-        throw new Error("Backend returned neither output nor job id.");
-      }
+      if (!jobId) throw new Error("backend returned neither output nor job id.");
 
-      setOutput(`// Job [${jobId.substring(0, 8)}...] queued. Waiting for worker...`);
+      setOutput(`// job [${jobId.substring(0, 8)}...] queued. waiting for worker...`);
 
       while (true) {
         const statusRes = await fetch(`${API_BASE_URL}/api/v1/status/${jobId}`);
-
         if (!statusRes.ok) {
-          const errText = await readResponseText(statusRes);
-          throw new Error(
-            errText || `Failed to fetch job status. Status: ${statusRes.status}`
-          );
+          const text = await statusRes.text().catch(() => "");
+          throw new Error(text || `status endpoint returned ${statusRes.status}`);
         }
 
         const statusData = await statusRes.json();
-        const currentStatus = String(
-          statusData.Status || statusData.status || ""
-        ).toLowerCase();
+        const currentStatus = String(statusData.Status || statusData.status || "").toLowerCase();
         const finalOutput = statusData.Output ?? statusData.output;
         const finalError = statusData.Error ?? statusData.error;
 
         if (currentStatus === "completed" || currentStatus === "failed") {
-          if (currentStatus === "failed") setIsError(true);
-          setOutput(String(finalError || finalOutput || "// Execution finished with no output."));
+          const hasError = Boolean(finalError);
+          setIsError(hasError);
+          setOutput(String(finalError || finalOutput || "// execution finished with no output."));
           break;
         }
 
-        setOutput(`// Job status: ${currentStatus || "queued"}...`);
+        setOutput(`// job status: ${currentStatus || "queued"}...`);
         await sleep(1000);
       }
     } catch (err: any) {
       setIsError(true);
-      setOutput(`// System Error: ${err.message}`);
+      setOutput(`// system error: ${err.message}`);
     } finally {
       setIsCompiling(false);
     }
   };
 
   return (
-    <div className="grow flex flex-col bg-muted/30 min-h-[calc(100vh-73px)] p-4 md:p-8">
-      <div className="max-w-7xl mx-auto w-full grow flex flex-col md:flex-row bg-background border border-border rounded-xl shadow-sm overflow-hidden">
+    <div className="grow flex flex-col" style={{ height: "calc(100vh - 56px)" }}>
 
-        {/* Left Side: The Code Editor */}
-        <div className="w-full md:w-1/2 flex flex-col border-b md:border-b-0 md:border-r border-border h-[50vh] md:h-auto relative">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-4 md:px-6 h-11 border-b border-border bg-muted/30 shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono text-foreground/50">main.bl</span>
 
-          <div className="flex justify-between items-center px-6 h-16 border-b border-border bg-muted/40 shrink-0 relative z-30">
+          <div className="h-3.5 w-px bg-border" />
 
-            <div className="flex items-center gap-4">
-              <span className="text-base font-semibold tracking-wide text-foreground/90">main.bl</span>
-
-              {/* DROPDOWN COMPONENT */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowExamples(!showExamples)}
-                  className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-muted/80 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /></svg>
-                  Examples
-                </button>
-
-                {showExamples && (
-                  <>
-                    {/* Invisible overlay to close dropdown when clicking outside */}
-                    <div className="fixed inset-0 z-40" onClick={() => setShowExamples(false)} />
-
-                    {/* THE FIX: 
-                      1. bg-background safely taps our CSS variables (no flashbangs).
-                      2. z-[100] absolutely dominates Monaco's internal layering. 
-                    */}
-                    <div className="absolute top-full left-0 mt-2 w-72 bg-background border border-border rounded-xl shadow-2xl z-[100] overflow-hidden transform opacity-100 scale-100 transition-all origin-top-left">
-                      <div className="px-4 py-3 border-b border-border bg-muted/40 flex items-center justify-between">
-                        <span className="text-xs font-bold text-foreground/70 uppercase tracking-widest">Snippets Library</span>
-                      </div>
-                      <div className="max-h-80 overflow-y-auto p-2 space-y-1">
-                        {EXAMPLES.map((ex) => (
-                          <button
-                            key={ex.name}
-                            onClick={() => {
-                              setCode(ex.code);
-                              setShowExamples(false);
-                            }}
-                            className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/80 transition-colors group flex flex-col gap-0.5"
-                          >
-                            <span className="text-sm font-semibold text-foreground/90 group-hover:text-foreground transition-colors">{ex.name}</span>
-                            <span className="text-xs text-foreground/50 transition-colors">{ex.description}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleSave}
-                disabled={saveStatus === "saving"}
-                className={`text-sm px-5 py-2 rounded-md font-medium transition-all ${saveStatus === "saving"
-                  ? "bg-muted text-foreground/50 cursor-wait"
-                  : saveStatus === "saved"
-                    ? "bg-green-600/20 text-green-600 border border-green-600/30 dark:text-green-400"
-                    : saveStatus === "unauthorized"
-                      ? "bg-red-600/20 text-red-600 border border-red-600/30 dark:text-red-400"
-                      : saveStatus === "error"
-                        ? "bg-red-600/20 text-red-600 border border-red-600/30 dark:text-red-400"
-                        : "border border-border text-foreground/80 hover:bg-muted hover:text-foreground"
-                  }`}
+          {/* Snippets dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExamples(!showExamples)}
+              className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground transition-colors py-1 px-2 rounded hover:bg-muted/60"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                {saveStatus === "saving" && "Saving..."}
-                {saveStatus === "saved" && "Saved!"}
-                {saveStatus === "unauthorized" && "Login to Save"}
-                {saveStatus === "error" && "Save Failed"}
-                {saveStatus === "idle" && "Save"}
-              </button>
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg>
+              Examples
+            </button>
 
-              <button
-                onClick={handleRun}
-                disabled={isCompiling}
-                className={`text-sm px-6 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${isCompiling
-                  ? "bg-foreground/30 cursor-not-allowed text-background"
-                  : "bg-foreground text-background hover:opacity-90 shadow-sm"
-                  }`}
-              >
-                {isCompiling ? "Compiling..." : "Run Code"}
-              </button>
-            </div>
-          </div>
-
-          <div className="grow relative w-full h-full">
-            <div className="absolute" style={{ inset: 0 }}>
-              <BlanEditor code={code} onChange={(val) => setCode(val || "")} />
-            </div>
+            {showExamples && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowExamples(false)}
+                />
+                <div className="absolute top-full left-0 mt-1.5 w-68 bg-background border border-border rounded-lg shadow-xl z-[100] overflow-hidden">
+                  <div className="px-3 py-2 border-b border-border">
+                    <span className="text-xs font-semibold text-foreground/50 uppercase tracking-widest">
+                      Snippets
+                    </span>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto p-1.5 space-y-0.5">
+                    {EXAMPLES.map((ex) => (
+                      <button
+                        key={ex.name}
+                        onClick={() => {
+                          setCode(ex.code);
+                          setShowExamples(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded hover:bg-muted/60 transition-colors flex flex-col gap-0.5"
+                      >
+                        <span className="text-xs font-semibold text-foreground/80">
+                          {ex.name}
+                        </span>
+                        <span className="text-xs text-foreground/40">{ex.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Right Side: The Output Terminal */}
-        <div className="w-full md:w-1/2 flex flex-col bg-background h-[50vh] md:h-auto">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saveStatus === "saving"}
+            className={`text-xs px-3 py-1.5 rounded font-medium transition-all border ${saveStatus === "saved"
+                ? "border-green-500/40 text-green-500 bg-green-500/10"
+                : saveStatus === "unauthorized" || saveStatus === "error"
+                  ? "border-red-500/40 text-red-400 bg-red-500/10"
+                  : saveStatus === "saving"
+                    ? "border-border text-foreground/30 cursor-wait"
+                    : "border-border text-foreground/60 hover:text-foreground hover:border-foreground/30"
+              }`}
+          >
+            {saveStatus === "saving" && "Saving..."}
+            {saveStatus === "saved" && "Saved"}
+            {saveStatus === "unauthorized" && "Login to save"}
+            {saveStatus === "error" && "Save failed"}
+            {saveStatus === "idle" && "Save"}
+          </button>
 
-          <div className="flex items-center justify-between px-6 h-16 border-b border-border bg-muted/40 shrink-0">
-            <span className="text-base font-semibold tracking-wide text-foreground/90">Output Terminal</span>
+          <button
+            onClick={handleRun}
+            disabled={isCompiling}
+            className={`text-xs px-4 py-1.5 rounded font-semibold transition-all ${isCompiling
+                ? "bg-foreground/20 cursor-not-allowed text-foreground/40"
+                : "bg-foreground text-background hover:opacity-85"
+              }`}
+          >
+            {isCompiling ? "Running..." : "▶ Run"}
+          </button>
+        </div>
+      </div>
+
+      {/* Editor + Output — full bleed */}
+      <div className="grow flex flex-col md:flex-row overflow-hidden">
+
+        {/* Editor pane */}
+        <div className="w-full md:w-1/2 h-[50vh] md:h-full border-b md:border-b-0 md:border-r border-border relative">
+          <div className="absolute inset-0">
+            <BlanEditor code={code} onChange={(val) => setCode(val || "")} />
+          </div>
+        </div>
+
+        {/* Output pane */}
+        <div className="w-full md:w-1/2 h-[50vh] md:h-full flex flex-col bg-background">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/20 shrink-0">
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-1.5 h-1.5 rounded-full ${isError
+                    ? "bg-red-500"
+                    : output && !output.startsWith("//")
+                      ? "bg-green-500"
+                      : "bg-foreground/20"
+                  }`}
+              />
+              <span className="text-xs text-foreground/50 font-mono">output</span>
+            </div>
             {isCached && (
-              <span className="text-xs font-mono px-2.5 py-1 rounded-md border border-foreground/20 text-foreground/60 bg-muted/50">
+              <span className="text-xs font-mono px-2 py-0.5 rounded border border-foreground/15 text-foreground/40">
                 cached
               </span>
             )}
           </div>
 
           <div
-            className={`p-6 grow font-mono text-[15px] whitespace-pre-wrap overflow-y-auto leading-[1.7] tracking-tight ${isError
-              ? "text-red-400"
-              : output
-                ? "text-foreground/90"
-                : "text-foreground/40"
+            className={`p-5 grow font-mono text-sm whitespace-pre-wrap overflow-y-auto leading-relaxed ${isError
+                ? "text-red-400"
+                : output && !output.startsWith("//")
+                  ? "text-foreground/90"
+                  : "text-foreground/30"
               }`}
           >
-            {output || "// Execute your code to view the output."}
+            {output || "// run your code to see output here."}
           </div>
         </div>
       </div>
@@ -319,7 +412,13 @@ function PlaygroundInner() {
 
 export default function Playground() {
   return (
-    <Suspense fallback={<div className="p-8 font-mono text-sm">Loading workspace...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-full font-mono text-sm text-foreground/30">
+          loading workspace...
+        </div>
+      }
+    >
       <PlaygroundInner />
     </Suspense>
   );
