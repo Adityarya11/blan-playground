@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import BlanEditor from "@/components/BlanEditor";
 
@@ -19,15 +19,28 @@ bolna "Hello, World!"
 Bhag Bsdk`,
   },
   {
-    name: "Variables & Math",
-    description: "Basic arithmetic operations.",
+    name: "Simple Addition",
+    description: "Add two numbers and print the result.",
     code: `Haan Meri Jaan
-bhadwa x matlb 10
-bhadwa y matlb 20
-bolna "The sum is:"
-bolna x + y
-bolna "The product is:"
-bolna x * y
+bhadwa a matlb 5
+bhadwa b matlb 10
+bhadwa c matlb a + b
+bolna c
+Bhag Bsdk`,
+  },
+  {
+    name: "Print Even Numbers",
+    description: "Print even numbers from 1 to 10 using a loop.",
+    code: `Haan Meri Jaan
+bhadwa x matlb 1
+
+JabTak x < 10 TabTak
+    agar x % 2 == 0 tab
+        bolna x
+    khtm
+    bhadwa x matlb x + 1
+hogya
+
 Bhag Bsdk`,
   },
   {
@@ -47,14 +60,14 @@ khtm
 Bhag Bsdk`,
   },
   {
-    name: "While Loop",
-    description: "Countdown from 5.",
+    name: "Countdown",
+    description: "Count down from 5 to 1 then print a surprise.",
     code: `Haan Meri Jaan
-bhadwa count matlb 5
+bhadwa c matlb 5
 
-JabTak count > 0 TabTak
-    bolna count
-    bhadwa count matlb count - 1
+JabTak c > 0 TabTak
+    bolna c
+    bhadwa c matlb c - 1
 hogya
 
 bolna "Blastoff!"
@@ -62,7 +75,7 @@ Bhag Bsdk`,
   },
   {
     name: "Fibonacci (n=8)",
-    description: "First 8 numbers of the sequence. Change n to tune.",
+    description: "First 8 numbers. Change n to tune.",
     code: `Haan Meri Jaan
 bhadwa n matlb 8
 bhadwa a matlb 0
@@ -96,6 +109,39 @@ JabTak i <= n TabTak
 hogya
 
 bolna "Factorial:"
+bolna result
+Bhag Bsdk`,
+  },
+  {
+    name: "Multiplication Table (n=5)",
+    description: "Prints the table for n. Change n to tune.",
+    code: `Haan Meri Jaan
+bhadwa num matlb 5
+bhadwa i matlb 1
+
+bolna "Multiplication table:"
+JabTak i <= 10 TabTak
+    bolna num * i
+    bhadwa i matlb i + 1
+hogya
+
+Bhag Bsdk`,
+  },
+  {
+    name: "Power (base=2, exp=8)",
+    description: "Computes base^exp. Change values to tune.",
+    code: `Haan Meri Jaan
+bhadwa base matlb 2
+bhadwa exp matlb 8
+bhadwa result matlb 1
+bhadwa i matlb 0
+
+JabTak i < exp TabTak
+    bhadwa result matlb result * base
+    bhadwa i matlb i + 1
+hogya
+
+bolna "Result:"
 bolna result
 Bhag Bsdk`,
   },
@@ -134,6 +180,7 @@ function getCookie(name: string): string | null {
 function PlaygroundInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [code, setCode] = useState<string>(DEFAULT_CODE);
   const [output, setOutput] = useState<string>("");
@@ -145,6 +192,7 @@ function PlaygroundInner() {
     "idle" | "saving" | "saved" | "error" | "unauthorized"
   >("idle");
   const [showExamples, setShowExamples] = useState<boolean>(false);
+  const [fileName, setFileName] = useState<string>("main.bl");
 
   useEffect(() => {
     const param = searchParams.get("code");
@@ -164,6 +212,28 @@ function PlaygroundInner() {
     }, 1000);
     return () => clearTimeout(timeout);
   }, [code]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validExt = file.name.endsWith(".bl") || file.name.endsWith(".blan");
+    if (!validExt) {
+      alert("only .bl or .blan files are accepted.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setCode(content);
+      setFileName(file.name);
+    };
+    reader.readAsText(file);
+
+    // Reset input so the same file can be re-uploaded
+    e.target.value = "";
+  };
 
   const handleSave = async () => {
     if (!isLoggedIn) {
@@ -225,7 +295,9 @@ function PlaygroundInner() {
         const hasError = Boolean(directError);
         setIsError(hasError);
         setIsCached(cached && !hasError);
-        setOutput(String(directError || directOutput || "// execution finished with no output."));
+        setOutput(
+          String(directError || directOutput || "// execution finished with no output.")
+        );
         return;
       }
 
@@ -241,14 +313,18 @@ function PlaygroundInner() {
         }
 
         const statusData = await statusRes.json();
-        const currentStatus = String(statusData.Status || statusData.status || "").toLowerCase();
+        const currentStatus = String(
+          statusData.Status || statusData.status || ""
+        ).toLowerCase();
         const finalOutput = statusData.Output ?? statusData.output;
         const finalError = statusData.Error ?? statusData.error;
 
         if (currentStatus === "completed" || currentStatus === "failed") {
           const hasError = Boolean(finalError);
           setIsError(hasError);
-          setOutput(String(finalError || finalOutput || "// execution finished with no output."));
+          setOutput(
+            String(finalError || finalOutput || "// execution finished with no output.")
+          );
           break;
         }
 
@@ -264,20 +340,63 @@ function PlaygroundInner() {
   };
 
   return (
-    <div className="grow flex flex-col" style={{ height: "calc(100vh - 56px)" }}>
+    <div className="grow flex flex-col overflow-hidden" style={{ height: "calc(100vh - 56px)" }}>
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 md:px-6 h-11 border-b border-border bg-muted/30 shrink-0">
+      <div
+        className="flex items-center justify-between px-4 md:px-6 h-11 border-b border-border shrink-0"
+        style={{ backgroundColor: "var(--muted)" }}
+      >
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-foreground/50">main.bl</span>
+          <span className="text-xs font-mono" style={{ color: "var(--foreground)", opacity: 0.5 }}>
+            {fileName}
+          </span>
 
-          <div className="h-3.5 w-px bg-border" />
+          <div className="h-3.5 w-px" style={{ backgroundColor: "var(--border)" }} />
 
-          {/* Snippets dropdown */}
+          {/* File upload */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".bl,.blan"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 text-xs py-1 px-2 rounded transition-colors"
+            style={{ color: "var(--foreground)", opacity: 0.5 }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Upload .bl
+          </button>
+
+          <div className="h-3.5 w-px" style={{ backgroundColor: "var(--border)" }} />
+
+          {/* Examples dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowExamples(!showExamples)}
-              className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground transition-colors py-1 px-2 rounded hover:bg-muted/60"
+              className="flex items-center gap-1.5 text-xs py-1 px-2 rounded transition-colors"
+              style={{ color: "var(--foreground)", opacity: 0.5 }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -301,9 +420,21 @@ function PlaygroundInner() {
                   className="fixed inset-0 z-40"
                   onClick={() => setShowExamples(false)}
                 />
-                <div className="absolute top-full left-0 mt-1.5 w-68 bg-background border border-border rounded-lg shadow-xl z-[100] overflow-hidden">
-                  <div className="px-3 py-2 border-b border-border">
-                    <span className="text-xs font-semibold text-foreground/50 uppercase tracking-widest">
+                <div
+                  className="absolute top-full left-0 mt-1.5 w-64 rounded-lg shadow-xl z-[100] overflow-hidden border"
+                  style={{
+                    backgroundColor: "var(--background)",
+                    borderColor: "var(--border)",
+                  }}
+                >
+                  <div
+                    className="px-3 py-2 border-b"
+                    style={{ borderColor: "var(--border)", backgroundColor: "var(--muted)" }}
+                  >
+                    <span
+                      className="text-xs font-semibold uppercase tracking-widest"
+                      style={{ color: "var(--foreground)", opacity: 0.5 }}
+                    >
                       Snippets
                     </span>
                   </div>
@@ -313,14 +444,22 @@ function PlaygroundInner() {
                         key={ex.name}
                         onClick={() => {
                           setCode(ex.code);
+                          setFileName("main.bl");
                           setShowExamples(false);
                         }}
-                        className="w-full text-left px-3 py-2 rounded hover:bg-muted/60 transition-colors flex flex-col gap-0.5"
+                        className="w-full text-left px-3 py-2 rounded flex flex-col gap-0.5 transition-colors"
+                        style={{ color: "var(--foreground)" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = "var(--muted)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor = "transparent")
+                        }
                       >
-                        <span className="text-xs font-semibold text-foreground/80">
-                          {ex.name}
+                        <span className="text-xs font-semibold">{ex.name}</span>
+                        <span className="text-xs" style={{ opacity: 0.4 }}>
+                          {ex.description}
                         </span>
-                        <span className="text-xs text-foreground/40">{ex.description}</span>
                       </button>
                     ))}
                   </div>
@@ -334,14 +473,22 @@ function PlaygroundInner() {
           <button
             onClick={handleSave}
             disabled={saveStatus === "saving"}
-            className={`text-xs px-3 py-1.5 rounded font-medium transition-all border ${saveStatus === "saved"
-                ? "border-green-500/40 text-green-500 bg-green-500/10"
-                : saveStatus === "unauthorized" || saveStatus === "error"
-                  ? "border-red-500/40 text-red-400 bg-red-500/10"
-                  : saveStatus === "saving"
-                    ? "border-border text-foreground/30 cursor-wait"
-                    : "border-border text-foreground/60 hover:text-foreground hover:border-foreground/30"
-              }`}
+            className="text-xs px-3 py-1.5 rounded font-medium transition-all border"
+            style={{
+              borderColor:
+                saveStatus === "saved"
+                  ? "#22c55e60"
+                  : saveStatus === "unauthorized" || saveStatus === "error"
+                    ? "#ef444460"
+                    : "var(--border)",
+              color:
+                saveStatus === "saved"
+                  ? "#22c55e"
+                  : saveStatus === "unauthorized" || saveStatus === "error"
+                    ? "#f87171"
+                    : "var(--foreground)",
+              opacity: saveStatus === "saving" ? 0.4 : 1,
+            }}
           >
             {saveStatus === "saving" && "Saving..."}
             {saveStatus === "saved" && "Saved"}
@@ -353,54 +500,83 @@ function PlaygroundInner() {
           <button
             onClick={handleRun}
             disabled={isCompiling}
-            className={`text-xs px-4 py-1.5 rounded font-semibold transition-all ${isCompiling
-                ? "bg-foreground/20 cursor-not-allowed text-foreground/40"
-                : "bg-foreground text-background hover:opacity-85"
-              }`}
+            className="text-xs px-4 py-1.5 rounded font-semibold transition-all"
+            style={{
+              backgroundColor: isCompiling ? "var(--muted)" : "var(--foreground)",
+              color: isCompiling ? "var(--foreground)" : "var(--background)",
+              opacity: isCompiling ? 0.5 : 1,
+              cursor: isCompiling ? "not-allowed" : "pointer",
+            }}
           >
             {isCompiling ? "Running..." : "▶ Run"}
           </button>
         </div>
       </div>
 
-      {/* Editor + Output — full bleed */}
+      {/* Editor + Output */}
       <div className="grow flex flex-col md:flex-row overflow-hidden">
 
         {/* Editor pane */}
-        <div className="w-full md:w-1/2 h-[50vh] md:h-full border-b md:border-b-0 md:border-r border-border relative">
+        <div
+          className="w-full md:w-1/2 h-[50vh] md:h-full border-b md:border-b-0 md:border-r relative"
+          style={{ borderColor: "var(--border)" }}
+        >
           <div className="absolute inset-0">
             <BlanEditor code={code} onChange={(val) => setCode(val || "")} />
           </div>
         </div>
 
         {/* Output pane */}
-        <div className="w-full md:w-1/2 h-[50vh] md:h-full flex flex-col bg-background">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/20 shrink-0">
+        <div
+          className="w-full md:w-1/2 h-[50vh] md:h-full flex flex-col"
+          style={{ backgroundColor: "var(--background)" }}
+        >
+          <div
+            className="flex items-center justify-between px-4 py-2 border-b shrink-0"
+            style={{ borderColor: "var(--border)", backgroundColor: "var(--muted)" }}
+          >
             <div className="flex items-center gap-2">
               <div
-                className={`w-1.5 h-1.5 rounded-full ${isError
-                    ? "bg-red-500"
+                className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  backgroundColor: isError
+                    ? "#ef4444"
                     : output && !output.startsWith("//")
-                      ? "bg-green-500"
-                      : "bg-foreground/20"
-                  }`}
+                      ? "#22c55e"
+                      : "var(--border)",
+                }}
               />
-              <span className="text-xs text-foreground/50 font-mono">output</span>
+              <span
+                className="text-xs font-mono"
+                style={{ color: "var(--foreground)", opacity: 0.5 }}
+              >
+                output
+              </span>
             </div>
             {isCached && (
-              <span className="text-xs font-mono px-2 py-0.5 rounded border border-foreground/15 text-foreground/40">
+              <span
+                className="text-xs font-mono px-2 py-0.5 rounded border"
+                style={{
+                  borderColor: "var(--border)",
+                  color: "var(--foreground)",
+                  opacity: 0.4,
+                }}
+              >
                 cached
               </span>
             )}
           </div>
 
           <div
-            className={`p-5 grow font-mono text-sm whitespace-pre-wrap overflow-y-auto leading-relaxed ${isError
-                ? "text-red-400"
+            className="p-5 grow font-mono text-sm whitespace-pre-wrap overflow-y-auto leading-relaxed"
+            style={{
+              color: isError
+                ? "#f87171"
                 : output && !output.startsWith("//")
-                  ? "text-foreground/90"
-                  : "text-foreground/30"
-              }`}
+                  ? "var(--foreground)"
+                  : "var(--foreground)",
+              opacity: isError ? 1 : output && !output.startsWith("//") ? 0.9 : 0.3,
+            }}
           >
             {output || "// run your code to see output here."}
           </div>
@@ -414,7 +590,10 @@ export default function Playground() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center h-full font-mono text-sm text-foreground/30">
+        <div
+          className="flex items-center justify-center h-full font-mono text-sm"
+          style={{ color: "var(--foreground)", opacity: 0.3 }}
+        >
           loading workspace...
         </div>
       }
