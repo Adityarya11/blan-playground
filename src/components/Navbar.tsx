@@ -18,7 +18,7 @@ function deleteCookie(name: string) {
 
 export default function Navbar() {
     const router = useRouter();
-    const [theme, setTheme] = useState("dark");
+    const [theme, setTheme] = useState("light");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showCookieBanner, setShowCookieBanner] = useState(false);
 
@@ -77,6 +77,9 @@ export default function Navbar() {
                             </Link>
                             <Link href="/examples" className="hover:text-foreground transition-colors">
                                 Examples
+                            </Link>
+                            <Link href="/about" className="hover:text-foreground transition-colors">
+                                About
                             </Link>
                         </div>
                     </div>
