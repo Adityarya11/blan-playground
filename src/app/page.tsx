@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import BlanEditor from "@/components/BlanEditor";
 import WakeUpNotice from "@/components/WakeUpNotice";
 import VisitorCounter from "@/components/VisitorCount";
+import TourGuide from "@/components/TourGuide";
 
 const DEFAULT_CODE = `Haan Meri Jaan
 bhadwa x matlb 10
@@ -196,6 +197,10 @@ function PlaygroundInner() {
   const [showExamples, setShowExamples] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string>("main.bl");
 
+  const [showTour, setShowTour] = useState(false);
+  const [showWakeUp, setShowWakeUp] = useState(false);
+  const tourTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const param = searchParams.get("code");
     if (param) {
@@ -275,7 +280,13 @@ function PlaygroundInner() {
     setIsError(false);
     setOutput("// compiling...");
 
+    tourTimerRef.current = setTimeout(() => {
+      setShowTour(true);
+    }, 3000);
+
     try {
+      await sleep(350000)
+
       const compileRes = await fetch(`${API_BASE_URL}/api/v1/compile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -337,8 +348,25 @@ function PlaygroundInner() {
       setIsError(true);
       setOutput(`// system error: ${err.message}`);
     } finally {
+      // Always clear the timer — if response came back fast, tour never shows
+      if (tourTimerRef.current) {
+        clearTimeout(tourTimerRef.current);
+        tourTimerRef.current = null;
+      }
       setIsCompiling(false);
+      setShowTour(false);
     }
+  };
+
+  // Tour handlers
+  const handleTourComplete = () => {
+    setShowTour(false);
+    setShowWakeUp(true);
+  };
+
+  const handleTourSkip = () => {
+    setShowTour(false);
+    setShowWakeUp(true);
   };
 
   return (
@@ -347,8 +375,7 @@ function PlaygroundInner() {
       {/* Toolbar */}
       <div
         className="flex items-center justify-between px-4 md:px-6 h-11 border-b border-border shrink-0"
-        style={{ backgroundColor: "var(--muted)" }}
-      >
+        style={{ backgroundColor: "var(--muted)" }}>
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono" style={{ color: "var(--foreground)", opacity: 0.5 }}>
             {fileName}
@@ -370,6 +397,7 @@ function PlaygroundInner() {
             style={{ color: "var(--foreground)", opacity: 0.5 }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
+            id="upload-button"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -392,7 +420,7 @@ function PlaygroundInner() {
           <div className="h-3.5 w-px" style={{ backgroundColor: "var(--border)" }} />
 
           {/* Examples dropdown */}
-          <div className="relative">
+          <div className="relative" id="examples-button">
             <button
               onClick={() => setShowExamples(!showExamples)}
               className="flex items-center gap-1.5 text-xs py-1 px-2 rounded transition-colors"
@@ -509,6 +537,7 @@ function PlaygroundInner() {
               opacity: isCompiling ? 0.5 : 1,
               cursor: isCompiling ? "not-allowed" : "pointer",
             }}
+            id="run-button"
           >
             {isCompiling ? "Running..." : "▶ Run"}
           </button>
@@ -521,8 +550,7 @@ function PlaygroundInner() {
         {/* Editor pane */}
         <div
           className="w-full md:w-1/2 h-[50vh] md:h-full border-b md:border-b-0 md:border-r relative"
-          style={{ borderColor: "var(--border)" }}
-        >
+          style={{ borderColor: "var(--border)" }} id="editor-pane">
           <div className="absolute inset-0">
             <BlanEditor code={code} onChange={(val) => setCode(val || "")} />
           </div>
@@ -531,7 +559,7 @@ function PlaygroundInner() {
         {/* Output pane */}
         <div
           className="w-full md:w-1/2 h-[50vh] md:h-full flex flex-col"
-          style={{ backgroundColor: "var(--background)" }}
+          style={{ backgroundColor: "var(--background)" }} id="output-pane"
         >
           <div
             className="flex items-center justify-between px-4 py-2 border-b shrink-0"
@@ -586,6 +614,17 @@ function PlaygroundInner() {
       </div>
       <WakeUpNotice />
       <VisitorCounter />
+      {showTour && (
+        <TourGuide
+          onComplete={handleTourComplete}
+          onSkip={handleTourSkip}
+        />
+      )}
+
+      <WakeUpNotice
+        open={showWakeUp}
+        onClose={() => setShowWakeUp(false)}
+      />
     </div>
   );
 }

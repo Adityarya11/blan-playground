@@ -141,6 +141,7 @@ function ExampleCard({ title, description, code }: { title: string; description:
             onClick={handleClick}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
+            id="nav-examples"
         >
             <div className="px-5 pt-5 pb-3">
                 <h2 className="text-sm font-semibold text-foreground tracking-tight">{title}</h2>
