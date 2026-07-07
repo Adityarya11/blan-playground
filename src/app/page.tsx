@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import BlanEditor from "@/components/BlanEditor";
 import WakeUpNotice from "@/components/WakeUpNotice";
+import VisitorCounter from "@/components/VisitorCount";
 
 const DEFAULT_CODE = `Haan Meri Jaan
 bhadwa x matlb 10
@@ -584,6 +585,7 @@ function PlaygroundInner() {
         </div>
       </div>
       <WakeUpNotice />
+      <VisitorCounter />
     </div>
   );
 }
