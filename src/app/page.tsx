@@ -203,15 +203,23 @@ function PlaygroundInner() {
 
   useEffect(() => {
     const param = searchParams.get("code");
-    if (param) {
-      setCode(decodeURIComponent(param));
-      router.replace("/");
-    } else {
-      const savedCode = localStorage.getItem("blan_draft");
-      if (savedCode) setCode(savedCode);
-    }
-    setIsLoggedIn(!!getCookie("blan_token"));
-  }, [searchParams, router]);
+
+    // Push the state updates to the next tick of the event loop
+    // to prevent synchronous cascading renders.
+    setTimeout(() => {
+      if (param) {
+        setCode(decodeURIComponent(param));
+        window.history.replaceState(null, "", "/");
+      } else {
+        const savedCode = localStorage.getItem("blan_draft");
+        if (savedCode) setCode(savedCode);
+      }
+
+      setIsLoggedIn(!!getCookie("blan_token"));
+    }, 0);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -285,7 +293,7 @@ function PlaygroundInner() {
     }, 3000);
 
     try {
-      await sleep(350000)
+      await sleep(350000);
 
       const compileRes = await fetch(`${API_BASE_URL}/api/v1/compile`, {
         method: "POST",
@@ -295,7 +303,9 @@ function PlaygroundInner() {
 
       if (!compileRes.ok) {
         const text = await compileRes.text().catch(() => "");
-        throw new Error(text || `compile endpoint returned ${compileRes.status}`);
+        throw new Error(
+          text || `compile endpoint returned ${compileRes.status}`,
+        );
       }
 
       const compileData = await compileRes.json();
@@ -309,25 +319,34 @@ function PlaygroundInner() {
         setIsError(hasError);
         setIsCached(cached && !hasError);
         setOutput(
-          String(directError || directOutput || "// execution finished with no output.")
+          String(
+            directError ||
+              directOutput ||
+              "// execution finished with no output.",
+          ),
         );
         return;
       }
 
-      if (!jobId) throw new Error("backend returned neither output nor job id.");
+      if (!jobId)
+        throw new Error("backend returned neither output nor job id.");
 
-      setOutput(`// job [${jobId.substring(0, 8)}...] queued. waiting for worker...`);
+      setOutput(
+        `// job [${jobId.substring(0, 8)}...] queued. waiting for worker...`,
+      );
 
       while (true) {
         const statusRes = await fetch(`${API_BASE_URL}/api/v1/status/${jobId}`);
         if (!statusRes.ok) {
           const text = await statusRes.text().catch(() => "");
-          throw new Error(text || `status endpoint returned ${statusRes.status}`);
+          throw new Error(
+            text || `status endpoint returned ${statusRes.status}`,
+          );
         }
 
         const statusData = await statusRes.json();
         const currentStatus = String(
-          statusData.Status || statusData.status || ""
+          statusData.Status || statusData.status || "",
         ).toLowerCase();
         const finalOutput = statusData.Output ?? statusData.output;
         const finalError = statusData.Error ?? statusData.error;
@@ -336,7 +355,11 @@ function PlaygroundInner() {
           const hasError = Boolean(finalError);
           setIsError(hasError);
           setOutput(
-            String(finalError || finalOutput || "// execution finished with no output.")
+            String(
+              finalError ||
+                finalOutput ||
+                "// execution finished with no output.",
+            ),
           );
           break;
         }
@@ -370,18 +393,27 @@ function PlaygroundInner() {
   };
 
   return (
-    <div className="grow flex flex-col overflow-hidden" style={{ height: "calc(100vh - 56px)" }}>
-
+    <div
+      className="grow flex flex-col overflow-hidden"
+      style={{ height: "calc(100vh - 56px)" }}
+    >
       {/* Toolbar */}
       <div
         className="flex items-center justify-between px-4 md:px-6 h-11 border-b border-border shrink-0"
-        style={{ backgroundColor: "var(--muted)" }}>
+        style={{ backgroundColor: "var(--muted)" }}
+      >
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono" style={{ color: "var(--foreground)", opacity: 0.5 }}>
+          <span
+            className="text-xs font-mono"
+            style={{ color: "var(--foreground)", opacity: 0.5 }}
+          >
             {fileName}
           </span>
 
-          <div className="h-3.5 w-px" style={{ backgroundColor: "var(--border)" }} />
+          <div
+            className="h-3.5 w-px"
+            style={{ backgroundColor: "var(--border)" }}
+          />
 
           {/* File upload */}
           <input
@@ -417,7 +449,10 @@ function PlaygroundInner() {
             Upload .bl
           </button>
 
-          <div className="h-3.5 w-px" style={{ backgroundColor: "var(--border)" }} />
+          <div
+            className="h-3.5 w-px"
+            style={{ backgroundColor: "var(--border)" }}
+          />
 
           {/* Examples dropdown */}
           <div className="relative" id="examples-button">
@@ -459,7 +494,10 @@ function PlaygroundInner() {
                 >
                   <div
                     className="px-3 py-2 border-b"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--muted)" }}
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--muted)",
+                    }}
                   >
                     <span
                       className="text-xs font-semibold uppercase tracking-widest"
@@ -480,10 +518,12 @@ function PlaygroundInner() {
                         className="w-full text-left px-3 py-2 rounded flex flex-col gap-0.5 transition-colors"
                         style={{ color: "var(--foreground)" }}
                         onMouseEnter={(e) =>
-                          (e.currentTarget.style.backgroundColor = "var(--muted)")
+                          (e.currentTarget.style.backgroundColor =
+                            "var(--muted)")
                         }
                         onMouseLeave={(e) =>
-                          (e.currentTarget.style.backgroundColor = "transparent")
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent")
                         }
                       >
                         <span className="text-xs font-semibold">{ex.name}</span>
@@ -532,7 +572,9 @@ function PlaygroundInner() {
             disabled={isCompiling}
             className="text-xs px-4 py-1.5 rounded font-semibold transition-all"
             style={{
-              backgroundColor: isCompiling ? "var(--muted)" : "var(--foreground)",
+              backgroundColor: isCompiling
+                ? "var(--muted)"
+                : "var(--foreground)",
               color: isCompiling ? "var(--foreground)" : "var(--background)",
               opacity: isCompiling ? 0.5 : 1,
               cursor: isCompiling ? "not-allowed" : "pointer",
@@ -546,11 +588,12 @@ function PlaygroundInner() {
 
       {/* Editor + Output */}
       <div className="grow flex flex-col md:flex-row overflow-hidden">
-
         {/* Editor pane */}
         <div
           className="w-full md:w-1/2 h-[50vh] md:h-full border-b md:border-b-0 md:border-r relative"
-          style={{ borderColor: "var(--border)" }} id="editor-pane">
+          style={{ borderColor: "var(--border)" }}
+          id="editor-pane"
+        >
           <div className="absolute inset-0">
             <BlanEditor code={code} onChange={(val) => setCode(val || "")} />
           </div>
@@ -559,11 +602,15 @@ function PlaygroundInner() {
         {/* Output pane */}
         <div
           className="w-full md:w-1/2 h-[50vh] md:h-full flex flex-col"
-          style={{ backgroundColor: "var(--background)" }} id="output-pane"
+          style={{ backgroundColor: "var(--background)" }}
+          id="output-pane"
         >
           <div
             className="flex items-center justify-between px-4 py-2 border-b shrink-0"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--muted)" }}
+            style={{
+              borderColor: "var(--border)",
+              backgroundColor: "var(--muted)",
+            }}
           >
             <div className="flex items-center gap-2">
               <div
@@ -605,7 +652,11 @@ function PlaygroundInner() {
                 : output && !output.startsWith("//")
                   ? "var(--foreground)"
                   : "var(--foreground)",
-              opacity: isError ? 1 : output && !output.startsWith("//") ? 0.9 : 0.3,
+              opacity: isError
+                ? 1
+                : output && !output.startsWith("//")
+                  ? 0.9
+                  : 0.3,
             }}
           >
             {output || "// run your code to see output here."}
@@ -615,16 +666,10 @@ function PlaygroundInner() {
       <WakeUpNotice />
       <VisitorCounter />
       {showTour && (
-        <TourGuide
-          onComplete={handleTourComplete}
-          onSkip={handleTourSkip}
-        />
+        <TourGuide onComplete={handleTourComplete} onSkip={handleTourSkip} />
       )}
 
-      <WakeUpNotice
-        open={showWakeUp}
-        onClose={() => setShowWakeUp(false)}
-      />
+      <WakeUpNotice open={showWakeUp} onClose={() => setShowWakeUp(false)} />
     </div>
   );
 }
